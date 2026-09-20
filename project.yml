@@ -1,0 +1,18 @@
+name: AujunpeakFileBrowser
+options:
+  bundleIdPrefix: com.aujunpeak
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  AujunpeakFileBrowser:
+    type: application
+    platform: iOS
+    sources:
+      - path: AujunpeakFileBrowser
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.aujunpeak.filebrowser
+      MARKETING_VERSION: 1.0.0
+      CURRENT_PROJECT_VERSION: 1
+      SWIFT_VERSION: 5.0
+      INFOPLIST_FILE: AujunpeakFileBrowser/Resources/Info.plist
+      GENERATE_INFOPLIST_FILE: NO
