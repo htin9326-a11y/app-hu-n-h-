@@ -1,25 +1,74 @@
 name: Build iOS
+
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
+
 jobs:
   build:
     runs-on: macos-15
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.4'
+
       - name: Install XcodeGen
         run: brew install xcodegen
+
       - name: Generate Xcode project
         run: xcodegen generate
-      - name: Build
+
+      - name: Build unsigned iOS app
         run: |
+          set -e
+
+          rm -rf build
+          mkdir -p build
+
           xcodebuild \
             -project AujunpeakFileBrowser.xcodeproj \
             -scheme AujunpeakFileBrowser \
             -sdk iphoneos \
             -configuration Release \
-            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/DerivedData \
+            CONFIGURATION_BUILD_DIR="$PWD/build/Products" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
             build
+
+      - name: Package IPA
+        run: |
+          set -e
+
+          APP_PATH="build/Products/AujunpeakFileBrowser.app"
+
+          if [ ! -d "$APP_PATH" ]; then
+            echo "ERROR: $APP_PATH was not created."
+            echo "Available build output:"
+            find build -maxdepth 5 -print
+            exit 1
+          fi
+
+          rm -rf build/Payload
+          mkdir -p build/Payload
+
+          cp -R "$APP_PATH" build/Payload/
+
+          cd build
+          /usr/bin/zip -qry AujunpeakFileBrowser.ipa Payload
+
+          echo "IPA created:"
+          ls -lh AujunpeakFileBrowser.ipa
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: AujunpeakFileBrowser-IPA
+          path: build/AujunpeakFileBrowser.ipa
+          if-no-files-found: error
+          retention-days: 7
